@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orario EmpowerTech</title>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+<style>
+    :root { 
+        --primary: #2563eb; 
+        --bg: #f1f5f9; 
+        --surface: #ffffff; 
+        --text: #0f172a;
+        --border: #e2e8f0;
+        --header-h: 60px;
+        --nav-h: 60px;
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        background: var(--bg); margin: 0; color: var(--text); 
+        height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    
+    /* --- HEADER --- */
+    .app-header {
+        height: var(--header-h); background: var(--surface);
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0 20px; border-bottom: 1px solid var(--border);
+        flex-shrink: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+    .brand { font-size: 1.3rem; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; text-transform:uppercase; }
+    .actions { display: flex; gap: 10px; }
+    .btn-icon {
+        background: transparent; border: 1px solid var(--border);
+        width: 36px; height: 36px; border-radius: 8px; font-size: 1.1rem;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: 0.2s;
+    }
+    .btn-icon:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
+
+    /* --- BACKDROP (Sfondo scuro) --- */
+    .backdrop {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5); z-index: 900;
+        display: none; backdrop-filter: blur(2px);
+    }
+    .backdrop.active { display: block; }
+
+    /* --- PANNELLI (Slide Down) --- */
+    .panel {
+        position: fixed; top: -100%; left: 0; right: 0; 
+        background: white; padding: 20px; z-index: 1000;
+        border-bottom: 2px solid var(--primary);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transition: top 0.3s ease-in-out;
+        max-height: 80vh; overflow-y: auto;
+    }
+    .panel.open { top: var(--header-h); }
+
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+    .panel-title { margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+    .btn-close-panel { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+
+    /* Inputs */
+    .f-inp { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; background: #f8fafc; }
+    .btn-full { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .btn-ghost { width: 100%; padding: 10px; background: transparent; color: #ef4444; border: none; font-weight: 600; cursor: pointer; margin-top: 5px; }
+
+    /* Help Content */
+    .help-list li { margin-bottom: 12px; line-height: 1.5; font-size: 0.95rem; }
+
+    /* --- MAIN CONTENT AREA --- */
+    .main-area { flex-grow: 1; position: relative; overflow: hidden; }
+
+    /* --- VISTA LISTA --- */
+    #view-list { height: 100%; overflow-y: auto; padding: 20px; display: block; }
+    .grid-container {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px; max-width: 1600px; margin: 0 auto;
+    }
+    
+    .date-row {
+        grid-column: 1 / -1; margin-top: 20px; margin-bottom: 10px;
+        padding-bottom: 5px; border-bottom: 2px solid var(--border);
+        font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px;
+        position: sticky; top: -20px; background: var(--bg); z-index: 10;
+    }
+
+    .card {
+        background: var(--surface); border-radius: 12px; padding: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid var(--border);
+        display: flex; flex-direction: column; gap: 8px;
+        position: relative; overflow: hidden; height: 100%; transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+    .card-border { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+    
+    .card-head { display: flex; justify-content: space-between; align-items: center; }
+    .badge-class { font-size: 0.75rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+    .badge-time { font-family: monospace; font-weight: 600; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; color: #334155; }
+    
+    .card-body { display: flex; align-items: center; gap: 12px; margin-top: 5px; }
+    .badge-mod { 
+        width: 30px; height: 30px; background: var(--primary); color: white;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .teacher { font-weight: 600; font-size: 1rem; line-height: 1.3; }
+
+    /* --- VISTA CALENDARIO --- */
+    #view-calendar { height: 100%; display: none; padding: 20px; }
+    #calendar { max-width: 1400px; margin: 0 auto; height: 100%; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .fc-toolbar-title { font-size: 1.2rem !important; font-weight: 700; }
+    .fc-button-primary { background-color: var(--primary) !important; border-color: var(--primary) !important; }
+
+    /* --- NAV BAR --- */
+    .nav-bar {
+        height: var(--nav-h); background: var(--surface); border-top: 1px solid var(--border);
+        display: flex; justify-content: center; align-items: center; gap: 30px;
+        flex-shrink: 0; z-index: 100;
+    }
+    .nav-btn {
+        padding: 8px 20px; cursor: pointer; border-radius: 8px;
+        display: flex; flex-direction: column; align-items: center; gap: 2px;
+        color: #94a3b8; font-size: 0.75rem; font-weight: 600;
+    }
+    .nav-btn.active { color: var(--primary); background: #eff6ff; }
+    .nav-icon { font-size: 1.4rem; }
+
+    /* --- LEGENDA MODAL --- */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.6); z-index: 2000;
+        display: none; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal {
+        background: white; width: 100%; max-width: 500px;
+        border-radius: 12px; padding: 20px; max-height: 85vh; overflow-y: auto;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+    .l-row { display: flex; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    .l-badge { background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 0.8rem; min-width: 35px; text-align: center; }
+    .l-txt { font-size: 0.9rem; line-height: 1.4; }
+    .tag { font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+    .tag-c { background: #dbeafe; color: #1e40af; }
+    .tag-e { background: #fce7f3; color: #9d174d; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="brand">EmpowerTech - orario lezioni</div>
+    <div class="actions">
+        <button class="btn-icon" onclick="togglePanel('help')">❓</button>
+        <button class="btn-icon" onclick="togglePanel('filters')">🌪️</button>
+        <button class="btn-icon" onclick="toggleModal('legend', true)">ℹ️</button>
+    </div>
+</header>
+
+<div id="backdrop" class="backdrop" onclick="closeAll()"></div>
+
+<div id="panel-filters" class="panel">
+    <div class="panel-header">
+        <h3 class="panel-title">Filtra Orario</h3>
+        <button class="btn-close-panel" onclick="closeAll()">×</button>
+    </div>
+    
+    <select id="f-class" class="f-inp" onchange="applyFilters()"><option value="">Tutte le Classi</option></select>
+    <select id="f-teacher" class="f-inp" onchange="applyFilters()"><option value="">Tutti i Docenti</option></select>
+    <input type="search" id="f-search" class="f-inp" placeholder="Cerca..." onkeyup="applyFilters()">
+    
+    <button class="btn-full" onclick="closeAll()">Applica e Chiudi</button>
+    <button class="btn-ghost" onclick="resetFilters()">Resetta tutto</button>
+</div>
+
+<div id="panel-help" class="panel">
+    <div class="panel-header">
+        <h3 class="panel-title">Guida</h3>
+        <button class="btn-close-panel" onclick="closeAll()">×</button>
+    </div>
+    <ul class="help-list">
+        <li><b>🌪️ Filtri:</b> Clicca l'icona in alto per selezionare la tua classe.</li>
+        <li><b>📅 Vista Calendario:</b> Usa i tasti in basso per passare dalla lista alla griglia mensile.</li>
+        <li><b>ℹ️ Legenda:</b> Premi l'icona per vedere il significato dei codici M1-M7.</li>
+    </ul>
+    <button class="btn-full" onclick="closeAll()">Ho capito</button>
+</div>
+
+<main class="main-area">
+    <div id="view-list">
+        <div id="list-grid" class="grid-container"></div>
+    </div>
+    <div id="view-calendar">
+        <div id="calendar"></div>
+    </div>
+</main>
+
+<nav class="nav-bar">
+    <div class="nav-btn active" id="nav-list" onclick="switchView('list')">
+        <span class="nav-icon">☰</span> Lista
+    </div>
+    <div class="nav-btn" id="nav-cal" onclick="switchView('calendar')">
+        <span class="nav-icon">📅</span> Calendario
+    </div>
+</nav>
+
+<div id="modal-legend" class="modal-overlay" onclick="toggleModal('legend', false)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+            <h3 style="margin:0; color:var(--primary)">Legenda Moduli</h3>
+            <button onclick="toggleModal('legend', false)" style="border:none; background:none; font-size:1.5rem; cursor:pointer">×</button>
+        </div>
+        <div class="l-row"><div class="l-badge">M1</div><div class="l-txt"><b>1.1:</b> Strumenti informatici <span class="tag tag-c">CORE</span></div></div>
+        <div class="l-row"><div class="l-badge">M2</div><div class="l-txt"><b>2.2:</b> Ascolto attivo <span class="tag tag-c">CORE</span></div></div>
+        <div class="l-row"><div class="l-badge">M3</div><div class="l-txt"><b>2.3:</b> Tecniche comunicazione <span class="tag tag-c">CORE</span></div></div>
+        <div class="l-row"><div class="l-badge">M4</div><div class="l-txt"><b>3.4:</b> Teamwork <span class="tag tag-c">CORE</span></div></div>
+        <div class="l-row"><div class="l-badge">M5</div><div class="l-txt"><b>1.5:</b> Social Media <span class="tag tag-e">EXT</span></div></div>
+        <div class="l-row"><div class="l-badge">M6</div><div class="l-txt"><b>1.6:</b> AI e Dati <span class="tag tag-e">EXT</span></div></div>
+        <div class="l-row"><div class="l-badge">M7</div><div class="l-txt"><b>3.7:</b> Project Mgmt <span class="tag tag-e">EXT</span></div></div>
+    </div>
+</div>
+
+<script>
+    const DATA = [{"d":"2025-12-02","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-02","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"17-19"},{"d":"2025-12-02","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-02","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-02","c":"classe 9","m":"M2","t":"Leone Emanuela","h":"16-20"},{"d":"2025-12-02","c":"classe 10","m":"M2","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-03","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-19"},{"d":"2025-12-03","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"17-20"},{"d":"2025-12-03","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-03","c":"classe 5","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-03","c":"classe 9","m":"M2","t":"Leone Emanuela","h":"16-20"},{"d":"2025-12-03","c":"classe 11","m":"M3","t":"Morrone Cristina","h":"17-19"},{"d":"2025-12-04","c":"classe 5","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-04","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-04","c":"classe 10","m":"M2","t":"Schiumerini Ada","h":"16-19"},{"d":"2025-12-05","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-05","c":"classe 5","m":"M1","t":"Misisca Remo","h":"17-20"},{"d":"2025-12-05","c":"classe 9","m":"M3","t":"Leone Emanuela","h":"16-19"},{"d":"2025-12-05","c":"classe 10","m":"M2","t":"Schiumerini Ada","h":"16-19"},{"d":"2025-12-05","c":"classe 11","m":"M2","t":"Morrone Cristina","h":"16-20"},{"d":"2025-12-06","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"10-13"},{"d":"2025-12-09","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-09","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-09","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"17-20"},{"d":"2025-12-09","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-09","c":"classe 10","m":"M3","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-10","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-10","c":"classe 5","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-10","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-10","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-10","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-10","c":"classe 9","m":"M3","t":"Leone Emanuela","h":"16-20"},{"d":"2025-12-10","c":"classe 11","m":"M2","t":"Morrone Cristina","h":"16-20"},{"d":"2025-12-11","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"17-20"},{"d":"2025-12-11","c":"classe 5","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-11","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-11","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-11","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-19"},{"d":"2025-12-11","c":"classe 10","m":"M3","t":"Schiumerini Ada","h":"16-20"},{"d":"2025-12-12","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-12","c":"classe 2","m":"M2","t":"Schiumerini Ada","h":"17-20"},{"d":"2025-12-12","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-12","c":"classe 5","m":"M1","t":"Misisca Remo","h":"17-20"},{"d":"2025-12-12","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-12","c":"classe 9","m":"M3","t":"Leone Emanuela","h":"16-19"},{"d":"2025-12-12","c":"classe 11","m":"M3","t":"Morrone Cristina","h":"16-19"},{"d":"2025-12-13","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"10-13"},{"d":"2025-12-13","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"9-13"},{"d":"2025-12-15","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-15","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-15","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-15","c":"classe 10","m":"M3","t":"Schiumerini Ada","h":"16-20"},{"d":"2025-12-16","c":"classe 1","m":"M2","t":"Leone Emanuela","h":"16-20"},{"d":"2025-12-16","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-16","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-16","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-16","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2025-12-17","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"16-20"},{"d":"2025-12-17","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-20"},{"d":"2025-12-17","c":"classe 5","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-17","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-17","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-17","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-17","c":"classe 11","m":"M3","t":"Morrone Cristina","h":"16-19"},{"d":"2025-12-18","c":"classe 1","m":"M2","t":"Leone Emanuela","h":"17-19"},{"d":"2025-12-18","c":"classe 2","m":"M3","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-18","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"17-20"},{"d":"2025-12-18","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-19","c":"classe 2","m":"M3","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-19","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2025-12-19","c":"classe 5","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-19","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-19","c":"classe 11","m":"M3","t":"Morrone Cristina","h":"17-19"},{"d":"2025-12-20","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"10-13"},{"d":"2025-12-20","c":"classe 5","m":"M1","t":"Misisca Remo","h":"10-13"},{"d":"2025-12-20","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"17-19"},{"d":"2025-12-22","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-22","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-22","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2025-12-22","c":"classe 5","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-22","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-23","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-23","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-23","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-29","c":"classe 2","m":"M2","t":"Schiumerini Ada","h":"17-20"},{"d":"2025-12-29","c":"classe 3","m":"M1","t":"Dyoub Abeer","h":"16-20"},{"d":"2025-12-29","c":"classe 5","m":"M1","t":"Misisca Remo","h":"16-20"},{"d":"2025-12-29","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-20"},{"d":"2025-12-29","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-30","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-30","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-20"},{"d":"2026-01-07","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-07","c":"classe 8","m":"M2","t":"Greco Giovannella","h":"17-19"},{"d":"2026-01-07","c":"classe 9","m":"M4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-01-07","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"17-19"},{"d":"2026-01-08","c":"classe 1","m":"M2","t":"Leone Emanuela","h":"17-19"},{"d":"2026-01-08","c":"classe 2","m":"M2","t":"Schiumerini Ada","h":"17-19"},{"d":"2026-01-08","c":"classe 3","m":"M2","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-08","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-08","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-08","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-09","c":"classe 1","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-09","c":"classe 3","m":"M2","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-09","c":"classe 4","m":"M2","t":"Greco Giovannella","h":"17-19"},{"d":"2026-01-09","c":"classe 6","m":"M1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2026-01-09","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-09","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-09","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-09","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-10","c":"classe 1","m":"M4","t":"DOCENTE ANONIMO 2","h":"9-13"},{"d":"2026-01-10","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"10-13"},{"d":"2026-01-12","c":"classe 1","m":"M3","t":"Leone Emanuela","h":"17-19"},{"d":"2026-01-12","c":"classe 3","m":"M3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-01-12","c":"classe 4","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-12","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-12","c":"classe 8","m":"M2","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-12","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"17-19"},{"d":"2026-01-13","c":"classe 1","m":"M3","t":"Leone Emanuela","h":"16-19"},{"d":"2026-01-13","c":"classe 2","m":"M3","t":"Schiumerini Ada","h":"16-19"},{"d":"2026-01-13","c":"classe 3","m":"M3","t":"Morrone Cristina","h":"16-19"},{"d":"2026-01-13","c":"classe 4","m":"M2","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-13","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-13","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-13","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-14","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-14","c":"classe 5","m":"M2","t":"Leone Emanuela","h":"16-20"},{"d":"2026-01-14","c":"classe 6","m":"M2","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-14","c":"classe 7","m":"M2","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-14","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-14","c":"classe 11","m":"M1","t":"Misisca Remo","h":"17-19"},{"d":"2026-01-15","c":"classe 5","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-15","c":"classe 8","m":"M2","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-15","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-16","c":"classe 1","m":"M3","t":"Leone Emanuela","h":"16-19"},{"d":"2026-01-16","c":"classe 2","m":"M3","t":"Schiumerini Ada","h":"16-19"},{"d":"2026-01-16","c":"classe 3","m":"M3","t":"Morrone Cristina","h":"16-19"},{"d":"2026-01-16","c":"classe 4","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-16","c":"classe 9","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-16","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-16","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-17","c":"classe 8","m":"M3","t":"Greco Giovannella","h":"10-12"},{"d":"2026-01-19","c":"classe 1","m":"M3","t":"Leone Emanuela","h":"17-19"},{"d":"2026-01-19","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-19"},{"d":"2026-01-19","c":"classe 3","m":"M3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-01-19","c":"classe 4","m":"M4","t":"DOCENTE ANONIMO 2","h":"17-19"},{"d":"2026-01-19","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-20","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-20","c":"classe 3","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-19"},{"d":"2026-01-20","c":"classe 7","m":"M2","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-20","c":"classe 8","m":"M3","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-20","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-21","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-21","c":"classe 5","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-21","c":"classe 7","m":"M3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-01-21","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-21","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-21","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-21","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-22","c":"classe 2","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-22","c":"classe 4","m":"M2","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-22","c":"classe 6","m":"M2","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-23","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-23","c":"classe 5","m":"M4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-01-23","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-23","c":"classe 10","m":"M1","t":"Di Biasi Luigi","h":"16-20"},{"d":"2026-01-23","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-24","c":"classe 3","m":"M4","t":"DOCENTE ANONIMO 1","h":"10-12"},{"d":"2026-01-24","c":"classe 6","m":"M3","t":"Schiumerini Ada","h":"10-13"},{"d":"2026-01-24","c":"classe 7","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-24","c":"classe 8","m":"M3","t":"Greco Giovannella","h":"10-13"},{"d":"2026-01-26","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-19"},{"d":"2026-01-26","c":"classe 2","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-26","c":"classe 5","m":"M2","t":"Leone Emanuela","h":"16-20"},{"d":"2026-01-26","c":"classe 7","m":"M3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-01-26","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-26","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-27","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-27","c":"classe 5","m":"M3","t":"Leone Emanuela","h":"16-19"},{"d":"2026-01-27","c":"classe 6","m":"M3","t":"Schiumerini Ada","h":"16-19"},{"d":"2026-01-27","c":"classe 7","m":"M3","t":"Morrone Cristina","h":"16-19"},{"d":"2026-01-27","c":"classe 9","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-27","c":"classe 10","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-28","c":"classe 2","m":"M4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-01-28","c":"classe 8","m":"M3","t":"Greco Giovannella","h":"17-19"},{"d":"2026-01-28","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-29","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-29","c":"classe 3","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-19"},{"d":"2026-01-29","c":"classe 4","m":"M3","t":"Greco Giovannella","h":"17-19"},{"d":"2026-01-29","c":"classe 5","m":"M3","t":"Leone Emanuela","h":"16-19"},{"d":"2026-01-29","c":"classe 10","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-29","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-30","c":"classe 1","m":"M1","t":"Fantini Alessandro","h":"16-19"},{"d":"2026-01-30","c":"classe 3","m":"M4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-01-30","c":"classe 6","m":"M3","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-30","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-20"},{"d":"2026-01-31","c":"classe 4","m":"M3","t":"Greco Giovannella","h":"10-13"},{"d":"2026-01-31","c":"classe 8","m":"M4","t":"DOCENTE ANONIMO 2","h":"10-12"},{"d":"2026-01-31","c":"classe 11","m":"M1","t":"Misisca Remo","h":"9-13"},{"d":"2026-02-02","c":"classe 5","m":"M3","t":"Leone Emanuela","h":"16-20"},{"d":"2026-02-02","c":"classe 6","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-02-02","c":"classe 7","m":"M3","t":"Morrone Cristina","h":"16-19"},{"d":"2026-02-02","c":"classe 10","m":"M4","t":"DOCENTE ANONIMO 2","h":"17-19"},{"d":"2026-02-02","c":"classe 11","m":"M1","t":"Misisca Remo","h":"16-20"},{"d":"2026-02-03","c":"classe 2","m":"M1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-02-03","c":"classe 4","m":"M1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-02-03","c":"classe 7","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-02-03","c":"classe 9","m":"M1","t":"Dyoub Abeer","h":"16-20"},{"d":"2026-02-03","c":"classe 11","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-02-04","c":"classe 4","m":"M3","t":"Greco Giovannella","h":"16-19"},{"d":"2026-02-04","c":"classe 8","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-02-05","c":"classe 7","m":"M4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-02-05","c":"classe 11","m":"M4","t":"DOCENTE ANONIMO 2","h":"17-19"},{"d":"2026-02-06","c":"classe 1","m":"M4","t":"DOCENTE ANONIMO 2","h":"17-19"},{"d":"2026-02-06","c":"classe 4","m":"M3","t":"Greco Giovannella","h":"17-19"},{"d":"2026-02-06","c":"classe 6","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-02-07","c":"classe 8","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-02-09","c":"classe 7","m":"M4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-02-09","c":"classe 8","m":"M1","t":"Bertagnon Alessandro","h":"17-19"},{"d":"2026-02-09","c":"classe 11","m":"M4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-02-10","c":"classe 6","m":"M4","t":"DOCENTE ANONIMO 1","h":"17-19"}];
+    let calendar = null;
+
+    // COLORI (Angolo Aureo)
+    const classes = [...new Set(DATA.map(i => i.c))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+    const teachers = [...new Set(DATA.map(i => i.t))].sort();
+    const colorMap = {};
+    classes.forEach((c, idx) => { colorMap[c] = (idx * 137.508) % 360; });
+
+    // INIT FILTERS
+    const selClass = document.getElementById('f-class');
+    const selTeacher = document.getElementById('f-teacher');
+    classes.forEach(c => selClass.add(new Option(c.toUpperCase(), c)));
+    teachers.forEach(t => selTeacher.add(new Option(t, t)));
+
+    // UI LOGIC
+    function togglePanel(id) {
+        // Chiudi altri pannelli
+        document.querySelectorAll('.panel').forEach(p => {
+            if (p.id !== 'panel-' + id) p.classList.remove('open');
+        });
+        
+        const el = document.getElementById('panel-' + id);
+        const bd = document.getElementById('backdrop');
+        
+        if (el.classList.contains('open')) {
+            el.classList.remove('open');
+            bd.classList.remove('active');
+        } else {
+            el.classList.add('open');
+            bd.classList.add('active');
+        }
+    }
+
+    function closeAll() {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+        document.getElementById('backdrop').classList.remove('active');
+    }
+
+    function toggleModal(id, show) {
+        document.getElementById('modal-' + id).style.display = show ? 'flex' : 'none';
+    }
+
+    function switchView(view) {
+        document.getElementById('view-list').style.display = view === 'list' ? 'block' : 'none';
+        document.getElementById('view-calendar').style.display = view === 'calendar' ? 'block' : 'none';
+        
+        document.getElementById('nav-list').classList.toggle('active', view === 'list');
+        document.getElementById('nav-cal').classList.toggle('active', view === 'calendar');
+
+        if(view === 'calendar') {
+            setTimeout(() => {
+                if(!calendar) initCalendar();
+                else calendar.render();
+            }, 50);
+        }
+    }
+
+    // RENDER LIST
+    function renderList(data) {
+        const div = document.getElementById('list-grid');
+        div.innerHTML = "";
+        
+        if(data.length === 0) {
+            div.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:40px; color:#94a3b8'>Nessuna lezione trovata.</div>";
+            return;
+        }
+
+        let curDay = "";
+        const today = new Date().toISOString().split('T')[0];
+        let scrolled = false;
+
+        data.forEach(item => {
+            if(item.d !== curDay) {
+                curDay = item.d;
+                const dObj = new Date(curDay);
+                const dStr = dObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+                const isToday = item.d >= today && !scrolled;
+                if(isToday) scrolled = true;
+                div.innerHTML += `<div class="date-row" ${isToday ? 'id="scroll-target"':''}>${dStr}</div>`;
+            }
+
+            const hue = colorMap[item.c];
+            const modHtml = item.m ? `<div class="badge-mod">${item.m}</div>` : '';
+
+            div.innerHTML += `
+                <div class="card">
+                    <div class="card-border" style="background:hsl(${hue}, 70%, 50%)"></div>
+                    <div class="card-head">
+                        <span class="badge-class" style="background:hsl(${hue}, 85%, 96%); color:hsl(${hue}, 80%, 25%)">${item.c}</span>
+                        <span class="badge-time">⏰ ${item.h}</span>
+                    </div>
+                    <div class="card-body">
+                        ${modHtml}
+                        <div class="teacher">${item.t}</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        setTimeout(() => {
+            const target = document.getElementById('scroll-target');
+            if(target) target.scrollIntoView({behavior: "smooth", block: "center"});
+        }, 300);
+    }
+
+    // RENDER CALENDAR
+    function initCalendar() {
+        const isMobile = window.innerWidth < 768;
+        const initialView = isMobile ? 'listMonth' : 'dayGridMonth';
+        
+        const events = DATA.map(item => {
+            let start = item.d, end = item.d;
+            if(item.h.includes('-')) {
+                const parts = item.h.replace(/s/g,'').split('-');
+                const clean = t => t.includes(':') ? t : t+":00";
+                start += 'T' + clean(parts[0]);
+                end += 'T' + clean(parts[1]);
+            }
+            const hue = colorMap[item.c];
+            return {
+                title: `[${item.m || '?'}] ${item.c} - ${item.t}`,
+                start: start, end: end,
+                backgroundColor: `hsl(${hue}, 70%, 50%)`,
+                borderColor: `hsl(${hue}, 70%, 40%)`
+            };
+        });
+
+        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            initialView: initialView,
+            locale: 'it',
+            height: '100%',
+            headerToolbar: { left: 'prev,next', center: 'title', right: isMobile ? 'listMonth' : 'dayGridMonth' },
+            events: events,
+            eventClick: (info) => alert(info.event.title)
+        });
+        calendar.render();
+    }
+
+    function applyFilters() {
+        const fc = selClass.value;
+        const ft = selTeacher.value;
+        const fs = document.getElementById('f-search').value.toLowerCase();
+
+        const filtered = DATA.filter(i => {
+            if(fc && i.c !== fc) return false;
+            if(ft && i.t !== ft) return false;
+            if(fs && !JSON.stringify(i).toLowerCase().includes(fs)) return false;
+            return true;
+        });
+
+        renderList(filtered);
+        
+        if(calendar) {
+            calendar.removeAllEvents();
+            const events = filtered.map(item => {
+                 let start = item.d, end = item.d;
+                if(item.h.includes('-')) {
+                    const parts = item.h.replace(/s/g,'').split('-');
+                    const clean = t => t.includes(':') ? t : t+":00";
+                    start += 'T' + clean(parts[0]);
+                    end += 'T' + clean(parts[1]);
+                }
+                const hue = colorMap[item.c];
+                return {
+                    title: `[${item.m || '?'}] ${item.c} - ${item.t}`,
+                    start: start, end: end,
+                    backgroundColor: `hsl(${hue}, 70%, 50%)`
+                };
+            });
+            calendar.addEventSource(events);
+        }
+    }
+
+    function resetFilters() {
+        selClass.value = ""; selTeacher.value = "";
+        document.getElementById('f-search').value = "";
+        applyFilters();
+        closeAll();
+    }
+
+    // Start
+    renderList(DATA);
+    
+    window.addEventListener('resize', () => {
+        if(calendar) {
+            const isMobile = window.innerWidth < 768;
+            const currentView = calendar.view.type;
+            if(isMobile && currentView === 'dayGridMonth') calendar.changeView('listMonth');
+            if(!isMobile && currentView === 'listMonth') calendar.changeView('dayGridMonth');
+        }
+    });
+
+</script>
+</body>
+</html>
