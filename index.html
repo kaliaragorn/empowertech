@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Orario EmpowerTech</title>
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
 <style>
@@ -12,259 +12,267 @@
         --surface: #ffffff; 
         --text: #0f172a;
         --border: #e2e8f0;
-        --header-h: 60px;
-        --nav-h: 60px;
+        --header-height: 4rem; 
+        --nav-height: 4rem;
     }
     
     * { box-sizing: border-box; }
     
-    body { 
+    html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-        background: var(--bg); margin: 0; color: var(--text); 
-        height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        background: var(--bg); color: var(--text);
+        overflow: hidden; 
+    }
+
+    /* --- LAYOUT PRINCIPALE --- */
+    #app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh; 
+        max-width: 100%;
     }
     
-    /* --- HEADER --- */
+    /* --- HEADER FISSO --- */
     .app-header {
-        height: var(--header-h); background: var(--surface);
+        flex: 0 0 auto; 
+        background: var(--surface);
         display: flex; justify-content: space-between; align-items: center;
-        padding: 0 20px; border-bottom: 1px solid var(--border);
-        flex-shrink: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        padding: 0 1rem; border-bottom: 1px solid var(--border);
+        z-index: 100; height: var(--header-height);
     }
-    .brand { font-size: 1.3rem; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; text-transform:uppercase; }
-    .actions { display: flex; gap: 10px; }
+
+    .logo-area { display: flex; align-items: center; }
+    .main-logo { max-height: 40px; width: auto; }
+    .logo-text { color: var(--primary); margin: 0; text-transform: uppercase; font-size: 1.2rem; letter-spacing: 1px; font-weight:900; }
+
+    .actions { display: flex; gap: 0.5rem; }
     .btn-icon {
         background: transparent; border: 1px solid var(--border);
-        width: 36px; height: 36px; border-radius: 8px; font-size: 1.1rem;
-        cursor: pointer; display: flex; align-items: center; justify-content: center;
-        transition: 0.2s;
+        width: 2.5rem; height: 2.5rem; border-radius: 0.5rem;
+        font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: 0.2s; color: var(--text);
     }
-    .btn-icon:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
+    .btn-icon:hover { background: #f1f5f9; }
 
-    /* --- BACKDROP (Sfondo scuro) --- */
-    .backdrop {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.5); z-index: 900;
-        display: none; backdrop-filter: blur(2px);
+    /* --- CONTENUTO CENTRALE SCORREVOLE --- */
+    .content-viewport {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        position: relative;
+        -webkit-overflow-scrolling: touch;
+        background: var(--bg);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
     }
-    .backdrop.active { display: block; }
-
-    /* --- PANNELLI (Slide Down) --- */
-    .panel {
-        position: fixed; top: -100%; left: 0; right: 0; 
-        background: white; padding: 20px; z-index: 1000;
-        border-bottom: 2px solid var(--primary);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        transition: top 0.3s ease-in-out;
-        max-height: 80vh; overflow-y: auto;
-    }
-    .panel.open { top: var(--header-h); }
-
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
-    .panel-title { margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-    .btn-close-panel { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
-
-    /* Inputs */
-    .f-inp { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; background: #f8fafc; }
-    .btn-full { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    .btn-ghost { width: 100%; padding: 10px; background: transparent; color: #ef4444; border: none; font-weight: 600; cursor: pointer; margin-top: 5px; }
-
-    /* Help Content */
-    .help-list li { margin-bottom: 12px; line-height: 1.5; font-size: 0.95rem; }
-
-    /* --- MAIN CONTENT AREA --- */
-    .main-area { flex-grow: 1; position: relative; overflow: hidden; }
 
     /* --- VISTA LISTA --- */
-    #view-list { height: 100%; overflow-y: auto; padding: 20px; display: block; }
-    .grid-container {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 20px; max-width: 1600px; margin: 0 auto;
-    }
+    #view-list { padding: 1rem; }
     
-    .date-row {
-        grid-column: 1 / -1; margin-top: 20px; margin-bottom: 10px;
-        padding-bottom: 5px; border-bottom: 2px solid var(--border);
-        font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px;
-        position: sticky; top: -20px; background: var(--bg); z-index: 10;
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1rem;
+        max-width: 1600px; margin: 0 auto;
     }
 
+    .date-sep {
+        grid-column: 1 / -1;
+        padding: 1rem 0 0.5rem 0;
+        font-weight: 700; color: #64748b; font-size: 0.9rem; text-transform: uppercase;
+        border-bottom: 2px solid var(--border);
+        margin-top: 0.5rem;
+        position: sticky; top: 0; background: var(--bg); z-index: 10;
+    }
+    
     .card {
-        background: var(--surface); border-radius: 12px; padding: 15px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid var(--border);
-        display: flex; flex-direction: column; gap: 8px;
-        position: relative; overflow: hidden; height: 100%; transition: transform 0.2s;
+        background: var(--surface); border-radius: 0.75rem; 
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+        border: 1px solid var(--border);
+        display: flex; flex-direction: column; gap: 0.5rem;
+        position: relative; overflow: hidden;
     }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-    .card-border { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+    .card-border { position: absolute; left: 0; top: 0; bottom: 0; width: 0.3rem; }
     
-    .card-head { display: flex; justify-content: space-between; align-items: center; }
-    .badge-class { font-size: 0.75rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
-    .badge-time { font-family: monospace; font-weight: 600; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; color: #334155; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; }
+    .badge-class { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; padding: 0.25rem 0.5rem; border-radius: 0.25rem; }
+    .badge-time { font-family: monospace; font-weight: 600; color: var(--text); background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.85rem; }
     
-    .card-body { display: flex; align-items: center; gap: 12px; margin-top: 5px; }
+    .card-main { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; }
     .badge-mod { 
-        width: 30px; height: 30px; background: var(--primary); color: white;
+        background: var(--primary); color: white; 
+        width: 2rem; height: 2rem; flex-shrink: 0;
         border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+        font-weight: 700; font-size: 0.8rem;
     }
-    .teacher { font-weight: 600; font-size: 1rem; line-height: 1.3; }
+    .teacher { font-size: 1rem; font-weight: 600; line-height: 1.3; }
 
     /* --- VISTA CALENDARIO --- */
-    #view-calendar { height: 100%; display: none; padding: 20px; }
-    #calendar { max-width: 1400px; margin: 0 auto; height: 100%; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    .fc-toolbar-title { font-size: 1.2rem !important; font-weight: 700; }
-    .fc-button-primary { background-color: var(--primary) !important; border-color: var(--primary) !important; }
+    #view-calendar { height: 100%; display: none; padding: 1rem; }
+    #calendar { max-width: 1400px; margin: 0 auto; height: 100%; background: white; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .fc-toolbar-title { font-size: 1rem !important; }
+    .fc-button { padding: 0.4em 0.65em !important; font-size: 0.9em !important; }
+    .fc-event-time { font-weight: bold; margin-right: 5px; }
 
     /* --- NAV BAR --- */
     .nav-bar {
-        height: var(--nav-h); background: var(--surface); border-top: 1px solid var(--border);
-        display: flex; justify-content: center; align-items: center; gap: 30px;
-        flex-shrink: 0; z-index: 100;
+        flex: 0 0 auto; 
+        height: var(--nav-height); 
+        background: var(--surface); 
+        border-top: 1px solid var(--border);
+        display: flex; justify-content: center; align-items: center; gap: 2rem;
+        z-index: 1000;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: content-box; 
     }
     .nav-btn {
-        padding: 8px 20px; cursor: pointer; border-radius: 8px;
-        display: flex; flex-direction: column; align-items: center; gap: 2px;
-        color: #94a3b8; font-size: 0.75rem; font-weight: 600;
+        text-align: center; color: #94a3b8; padding: 0.5rem 1rem; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; gap: 0.2rem; font-size: 0.75rem; font-weight: 600;
+        border-radius: 0.5rem;
     }
+    .nav-btn:hover { background: #f1f5f9; }
     .nav-btn.active { color: var(--primary); background: #eff6ff; }
-    .nav-icon { font-size: 1.4rem; }
+    .nav-icon { font-size: 1.25rem; }
 
-    /* --- LEGENDA MODAL --- */
+    /* --- PANNELLI --- */
+    .panel {
+        display: none; position: absolute; top: 0; left: 0; right: 0; 
+        background: white; padding: 1.5rem; z-index: 99;
+        border-bottom: 2px solid var(--primary);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .panel.open { display: block; animation: slideIn 0.2s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .f-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; margin-bottom: 0.75rem; font-size: 1rem; background: #f8fafc; }
+    .btn-primary { width: 100%; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 0.5rem; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .btn-ghost { width: 100%; padding: 0.5rem; background: transparent; color: #ef4444; border: none; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
+
+    /* --- MODALS --- */
     .modal-overlay {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.6); z-index: 2000;
-        display: none; align-items: center; justify-content: center; padding: 1rem;
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+        z-index: 2000; display: none; align-items: center; justify-content: center; padding: 1rem;
     }
-    .modal {
-        background: white; width: 100%; max-width: 500px;
-        border-radius: 12px; padding: 20px; max-height: 85vh; overflow-y: auto;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    .modal-content {
+        background: white; width: 100%; max-width: 500px; border-radius: 1rem;
+        padding: 1.5rem; max-height: 80vh; overflow-y: auto; text-align: left;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
     }
-    .l-row { display: flex; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-    .l-badge { background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 0.8rem; min-width: 35px; text-align: center; }
-    .l-txt { font-size: 0.9rem; line-height: 1.4; }
-    .tag { font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+    .legend-row { display: flex; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; align-items: baseline; }
+    .l-badge { background: var(--primary); color: white; padding: 0.1rem 0.5rem; border-radius: 0.25rem; font-weight: bold; margin-right: 0.75rem; min-width: 2.5rem; text-align: center; font-size: 0.85rem;}
+    .l-desc { font-size: 0.95rem; line-height: 1.5; }
+    .tag { font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 0.2rem; font-weight: bold; margin-left: 0.3rem; vertical-align: middle; }
     .tag-c { background: #dbeafe; color: #1e40af; }
     .tag-e { background: #fce7f3; color: #9d174d; }
+
 </style>
 </head>
 <body>
 
-<header class="app-header">
-    <div class="brand">EmpowerTech - orario lezioni</div>
-    <div class="actions">
-        <button class="btn-icon" onclick="togglePanel('help')">❓</button>
-        <button class="btn-icon" onclick="togglePanel('filters')">🌪️</button>
-        <button class="btn-icon" onclick="toggleModal('legend', true)">ℹ️</button>
-    </div>
-</header>
-
-<div id="backdrop" class="backdrop" onclick="closeAll()"></div>
-
-<div id="panel-filters" class="panel">
-    <div class="panel-header">
-        <h3 class="panel-title">Filtra Orario</h3>
-        <button class="btn-close-panel" onclick="closeAll()">×</button>
-    </div>
+<div id="app-container">
     
-    <select id="f-class" class="f-inp" onchange="applyFilters()"><option value="">Tutte le Classi</option></select>
-    <select id="f-teacher" class="f-inp" onchange="applyFilters()"><option value="">Tutti i Docenti</option></select>
-    <input type="search" id="f-search" class="f-inp" placeholder="Cerca..." onkeyup="applyFilters()">
-    
-    <button class="btn-full" onclick="closeAll()">Applica e Chiudi</button>
-    <button class="btn-ghost" onclick="resetFilters()">Resetta tutto</button>
+    <header class="app-header">
+        <div class="logo-area">
+            <img src="data:image/png;base64,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" class="main-logo" alt="EmpowerTech">
+        </div>
+        <div class="actions">
+            <button class="btn-icon" onclick="togglePanel('help')" title="Istruzioni">❓</button>
+            <button class="btn-icon" onclick="togglePanel('filters')" title="Filtri">🌪️</button>
+            <button class="btn-icon" onclick="toggleModal('legend', true)" title="Legenda">ℹ️</button>
+        </div>
+    </header>
+
+    <div class="content-viewport">
+        
+        <div id="panel-filters" class="panel">
+            <h3 style="margin-top:0">Filtra Orario</h3>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                <select id="f-class" class="f-input" onchange="applyFilters()"><option value="">Tutte le Classi</option></select>
+                <select id="f-teacher" class="f-input" onchange="applyFilters()"><option value="">Tutti i Docenti</option></select>
+            </div>
+            <input type="search" id="f-search" class="f-input" placeholder="Cerca..." onkeyup="applyFilters()">
+            <button class="btn-primary" onclick="togglePanel('filters')">Applica e Chiudi</button>
+            <button class="btn-ghost" onclick="resetFilters()">Resetta tutto</button>
+        </div>
+
+        <div id="panel-help" class="panel">
+            <h3 style="margin-top:0">Guida Rapida</h3>
+            <ul style="padding-left:1.2rem; line-height:1.6">
+                <li><b>Filtri:</b> Usa 🌪️ per selezionare la tua classe.</li>
+                <li><b>Viste:</b> Usa i tasti in basso (Lista/Calendario).</li>
+                <li><b>Mobile:</b> Il calendario su mobile diventa una lista mensile.</li>
+            </ul>
+            <button class="btn-primary" onclick="togglePanel('help')">Chiudi</button>
+        </div>
+
+        <div id="view-list"><div id="list-grid" class="grid-container"></div></div>
+        <div id="view-calendar"><div id="calendar"></div></div>
+        
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-btn active" onclick="switchView('list')" id="nav-list">
+            <span class="nav-icon">☰</span>
+            <span>Lista</span>
+        </div>
+        <div class="nav-btn" onclick="switchView('calendar')" id="nav-cal">
+            <span class="nav-icon">📅</span>
+            <span>Calendario</span>
+        </div>
+    </nav>
+
 </div>
-
-<div id="panel-help" class="panel">
-    <div class="panel-header">
-        <h3 class="panel-title">Guida</h3>
-        <button class="btn-close-panel" onclick="closeAll()">×</button>
-    </div>
-    <ul class="help-list">
-        <li><b>🌪️ Filtri:</b> Clicca l'icona in alto per selezionare la tua classe.</li>
-        <li><b>📅 Vista Calendario:</b> Usa i tasti in basso per passare dalla lista alla griglia mensile.</li>
-        <li><b>ℹ️ Legenda:</b> Premi l'icona per vedere il significato dei codici C1-E7.</li>
-    </ul>
-    <button class="btn-full" onclick="closeAll()">Ho capito</button>
-</div>
-
-<main class="main-area">
-    <div id="view-list">
-        <div id="list-grid" class="grid-container"></div>
-    </div>
-    <div id="view-calendar">
-        <div id="calendar"></div>
-    </div>
-</main>
-
-<nav class="nav-bar">
-    <div class="nav-btn active" id="nav-list" onclick="switchView('list')">
-        <span class="nav-icon">☰</span> Lista
-    </div>
-    <div class="nav-btn" id="nav-cal" onclick="switchView('calendar')">
-        <span class="nav-icon">📅</span> Calendario
-    </div>
-</nav>
 
 <div id="modal-legend" class="modal-overlay" onclick="toggleModal('legend', false)">
-    <div class="modal" onclick="event.stopPropagation()">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;margin-bottom:1rem; align-items:center;">
             <h3 style="margin:0; color:var(--primary)">Legenda Moduli</h3>
-            <button onclick="toggleModal('legend', false)" style="border:none; background:none; font-size:1.5rem; cursor:pointer">×</button>
+            <button onclick="toggleModal('legend', false)" style="border:none;background:transparent;font-size:1.5rem;cursor:pointer">×</button>
         </div>
-        <div class="l-row"><div class="l-badge">C1</div><div class="l-txt"><b>1.1:</b> Strumenti informatici <span class="tag tag-c">CORE</span></div></div>
-        <div class="l-row"><div class="l-badge">C2</div><div class="l-txt"><b>2.2:</b> Ascolto attivo <span class="tag tag-c">CORE</span></div></div>
-        <div class="l-row"><div class="l-badge">C3</div><div class="l-txt"><b>2.3:</b> Tecniche comunicazione <span class="tag tag-c">CORE</span></div></div>
-        <div class="l-row"><div class="l-badge">C4</div><div class="l-txt"><b>3.4:</b> Teamwork <span class="tag tag-c">CORE</span></div></div>
-        <div class="l-row"><div class="l-badge">E5</div><div class="l-txt"><b>1.5:</b> Social Media <span class="tag tag-e">EXT</span></div></div>
-        <div class="l-row"><div class="l-badge">E6</div><div class="l-txt"><b>1.6:</b> AI e Dati <span class="tag tag-e">EXT</span></div></div>
-        <div class="l-row"><div class="l-badge">E7</div><div class="l-txt"><b>3.7:</b> Project Mgmt <span class="tag tag-e">EXT</span></div></div>
+        <div class="legend-row"><div class="l-badge">C1</div><div class="l-desc"><b>1.1:</b> Strumenti informatici e sicurezza dati <span class="tag tag-c">CORE</span></div></div>
+        <div class="legend-row"><div class="l-badge">C2</div><div class="l-desc"><b>2.2:</b> Ascolto attivo e gestione stress <span class="tag tag-c">CORE</span></div></div>
+        <div class="legend-row"><div class="l-badge">C3</div><div class="l-desc"><b>2.3:</b> Tecniche comunicazione <span class="tag tag-c">CORE</span></div></div>
+        <div class="legend-row"><div class="l-badge">C4</div><div class="l-desc"><b>3.4:</b> Teamwork <span class="tag tag-c">CORE</span></div></div>
+        <div class="legend-row"><div class="l-badge">E5</div><div class="l-desc"><b>1.5:</b> Social Media <span class="tag tag-e">EXT</span></div></div>
+        <div class="legend-row"><div class="l-badge">E6</div><div class="l-desc"><b>1.6:</b> AI e Dati <span class="tag tag-e">EXT</span></div></div>
+        <div class="legend-row"><div class="l-badge">E7</div><div class="l-desc"><b>3.7:</b> Project Mgmt <span class="tag tag-e">EXT</span></div></div>
     </div>
 </div>
 
 <script>
-    const DATA = [{"d":"2025-12-02","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-02","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"17-19"},{"d":"2025-12-02","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-02","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-02","c":"classe 10","m":"","t":"C2 - Schiumerini Ada","h":"17-19"},{"d":"2025-12-03","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-19"},{"d":"2025-12-03","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"17-20"},{"d":"2025-12-03","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-03","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2025-12-03","c":"classe 11","m":"","t":"C2 - Morrone Cristina","h":"17-19"},{"d":"2025-12-04","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2025-12-04","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-04","c":"classe 10","m":"","t":"C2 - Schiumerini Ada","h":"16-19"},{"d":"2025-12-05","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-05","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"17-20"},{"d":"2025-12-05","c":"classe 10","m":"","t":"C2 - Schiumerini Ada","h":"16-19"},{"d":"2025-12-05","c":"classe 11","m":"","t":"C2 - Morrone Cristina","h":"16-20"},{"d":"2025-12-06","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"10-13"},{"d":"2025-12-06","c":"classe 9","m":"","t":"C2 - Schiumerini Ada","h":"10-12"},{"d":"2025-12-09","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-09","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-09","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"17-20"},{"d":"2025-12-09","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-09","c":"classe 10","m":"","t":"C3 - Schiumerini Ada","h":"17-19"},{"d":"2025-12-10","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-10","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2025-12-10","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-10","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-10","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-10","c":"classe 9","m":"","t":"C2 - Schiumerini Ada","h":"9-13"},{"d":"2025-12-10","c":"classe 11","m":"","t":"C2 - Morrone Cristina","h":"17-19"},{"d":"2025-12-11","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"17-20"},{"d":"2025-12-11","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2025-12-11","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-11","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-11","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-19"},{"d":"2025-12-11","c":"classe 10","m":"","t":"C3 - Schiumerini Ada","h":"16-20"},{"d":"2025-12-12","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-12","c":"classe 2","m":"","t":"C2 - Schiumerini Ada","h":"17-20"},{"d":"2025-12-12","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-12","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"17-20"},{"d":"2025-12-12","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-12","c":"classe 11","m":"","t":"C3 - Morrone Cristina","h":"16-20"},{"d":"2025-12-13","c":"classe 1","m":"","t":"C2 - Morrone Cristina","h":"9-13"},{"d":"2025-12-13","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"10-13"},{"d":"2025-12-13","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"9-13"},{"d":"2025-12-13","c":"classe 9","m":"","t":"C2 - Schiumerini Ada","h":"17-19"},{"d":"2025-12-15","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-15","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-15","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-15","c":"classe 10","m":"","t":"C3 - Schiumerini Ada","h":"16-20"},{"d":"2025-12-16","c":"classe 1","m":"","t":"C2 - Morrone Cristina","h":"16-20"},{"d":"2025-12-16","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-16","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-16","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-16","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2025-12-17","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"16-20"},{"d":"2025-12-17","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-20"},{"d":"2025-12-17","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2025-12-17","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-17","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-17","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-17","c":"classe 9","m":"","t":"C3 - Schiumerini Ada","h":"16-20"},{"d":"2025-12-17","c":"classe 11","m":"","t":"C3 - Morrone Cristina","h":"16-20"},{"d":"2025-12-18","c":"classe 2","m":"","t":"C3 - Schiumerini Ada","h":"17-19"},{"d":"2025-12-18","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"17-20"},{"d":"2025-12-18","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-19","c":"classe 2","m":"","t":"C3 - Schiumerini Ada","h":"17-19"},{"d":"2025-12-19","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2025-12-19","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2025-12-19","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-19","c":"classe 11","m":"","t":"C3 - Morrone Cristina","h":"17-19"},{"d":"2025-12-20","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"10-13"},{"d":"2025-12-20","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"10-13"},{"d":"2025-12-20","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"17-19"},{"d":"2025-12-20","c":"classe 9","m":"","t":"C3 - Schiumerini Ada","h":"16-20"},{"d":"2025-12-22","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-22","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-22","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2025-12-22","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2025-12-22","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-22","c":"classe 9","m":"","t":"C3 - Schiumerini Ada","h":"10-12"},{"d":"2025-12-23","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2025-12-23","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-23","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2025-12-29","c":"classe 2","m":"","t":"C2 - Schiumerini Ada","h":"17-20"},{"d":"2025-12-29","c":"classe 3","m":"","t":"C1 - Dyoub Abeer","h":"16-20"},{"d":"2025-12-29","c":"classe 5","m":"","t":"C1 - Misisca Remo","h":"16-20"},{"d":"2025-12-29","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-20"},{"d":"2025-12-29","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-30","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-30","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-20"},{"d":"2026-01-07","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-07","c":"classe 5","m":"","t":"C2 - Schiumerini Ada","h":"16-20"},{"d":"2026-01-07","c":"classe 8","m":"","t":"C2 - Greco Giovannella","h":"17-19"},{"d":"2026-01-07","c":"classe 9","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-01-07","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"17-19"},{"d":"2026-01-08","c":"classe 2","m":"","t":"C2 - Schiumerini Ada","h":"17-19"},{"d":"2026-01-08","c":"classe 3","m":"","t":"C2 - Morrone Cristina","h":"16-20"},{"d":"2026-01-08","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-08","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2026-01-08","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2026-01-09","c":"classe 1","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-09","c":"classe 3","m":"","t":"C2 - Morrone Cristina","h":"16-20"},{"d":"2026-01-09","c":"classe 4","m":"","t":"C2 - Greco Giovannella","h":"17-19"},{"d":"2026-01-09","c":"classe 5","m":"","t":"C2 - Schiumerini Ada","h":"16-20"},{"d":"2026-01-09","c":"classe 6","m":"","t":"C1 - Saccomanno Francesco Paolo","h":"16-19"},{"d":"2026-01-09","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-09","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2026-01-09","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2026-01-09","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2026-01-10","c":"classe 1","m":"","t":"DA ASSEGNARE","h":"9-13"},{"d":"2026-01-10","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"10-13"},{"d":"2026-01-12","c":"classe 3","m":"","t":"C3 - Morrone Cristina","h":"17-19"},{"d":"2026-01-12","c":"classe 4","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-12","c":"classe 5","m":"","t":"C3 - Schiumerini Ada","h":"16-20"},{"d":"2026-01-12","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2026-01-12","c":"classe 8","m":"","t":"C2 - Greco Giovannella","h":"16-19"},{"d":"2026-01-12","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"17-19"},{"d":"2026-01-13","c":"classe 2","m":"","t":"C3 - Schiumerini Ada","h":"16-19"},{"d":"2026-01-13","c":"classe 3","m":"","t":"C3 - Morrone Cristina","h":"16-19"},{"d":"2026-01-13","c":"classe 4","m":"","t":"C2 - Greco Giovannella","h":"16-19"},{"d":"2026-01-13","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-13","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2026-01-13","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2026-01-14","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-14","c":"classe 6","m":"","t":"C2 - Schiumerini Ada","h":"16-20"},{"d":"2026-01-14","c":"classe 7","m":"","t":"C2 - Morrone Cristina","h":"16-20"},{"d":"2026-01-14","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2026-01-14","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"17-19"},{"d":"2026-01-15","c":"classe 1","m":"","t":"C3 - Morrone Cristina","h":"16-20"},{"d":"2026-01-15","c":"classe 5","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-15","c":"classe 8","m":"","t":"C2 - Greco Giovannella","h":"16-19"},{"d":"2026-01-15","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2026-01-16","c":"classe 2","m":"","t":"C3 - Schiumerini Ada","h":"16-19"},{"d":"2026-01-16","c":"classe 3","m":"","t":"C3 - Morrone Cristina","h":"16-19"},{"d":"2026-01-16","c":"classe 4","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-16","c":"classe 9","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-16","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2026-01-16","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2026-01-17","c":"classe 1","m":"","t":"C3 - Morrone Cristina","h":"9-13"},{"d":"2026-01-17","c":"classe 8","m":"","t":"C3 - Greco Giovannella","h":"10-12"},{"d":"2026-01-19","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-19"},{"d":"2026-01-19","c":"classe 3","m":"","t":"C3 - Morrone Cristina","h":"17-19"},{"d":"2026-01-19","c":"classe 4","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-01-19","c":"classe 5","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-01-19","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2026-01-20","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-20","c":"classe 3","m":"","t":"DA ASSEGNARE","h":"16-19"},{"d":"2026-01-20","c":"classe 7","m":"","t":"C2 - Morrone Cristina","h":"16-20"},{"d":"2026-01-20","c":"classe 8","m":"","t":"C3 - Greco Giovannella","h":"16-19"},{"d":"2026-01-20","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2026-01-21","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2026-01-21","c":"classe 5","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-21","c":"classe 7","m":"","t":"C3 - Morrone Cristina","h":"17-19"},{"d":"2026-01-21","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-21","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2026-01-21","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2026-01-21","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2026-01-22","c":"classe 2","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-22","c":"classe 4","m":"","t":"C2 - Greco Giovannella","h":"16-19"},{"d":"2026-01-22","c":"classe 6","m":"","t":"C2 - Schiumerini Ada","h":"16-20"},{"d":"2026-01-23","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2026-01-23","c":"classe 5","m":"","t":"C3 - Schiumerini Ada","h":"17-19"},{"d":"2026-01-23","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2026-01-23","c":"classe 10","m":"","t":"C1 - Di Biasi Luigi","h":"16-20"},{"d":"2026-01-23","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2026-01-24","c":"classe 3","m":"","t":"DA ASSEGNARE","h":"10-12"},{"d":"2026-01-24","c":"classe 6","m":"","t":"C3 - Schiumerini Ada","h":"10-13"},{"d":"2026-01-24","c":"classe 7","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2026-01-24","c":"classe 8","m":"","t":"C3 - Greco Giovannella","h":"10-13"},{"d":"2026-01-26","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-19"},{"d":"2026-01-26","c":"classe 2","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-26","c":"classe 7","m":"","t":"C3 - Morrone Cristina","h":"17-19"},{"d":"2026-01-26","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-26","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-19"},{"d":"2026-01-27","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-27","c":"classe 6","m":"","t":"C3 - Schiumerini Ada","h":"16-19"},{"d":"2026-01-27","c":"classe 7","m":"","t":"C3 - Morrone Cristina","h":"16-19"},{"d":"2026-01-27","c":"classe 9","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-27","c":"classe 10","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-28","c":"classe 2","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-01-28","c":"classe 8","m":"","t":"C3 - Greco Giovannella","h":"17-19"},{"d":"2026-01-28","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2026-01-29","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-20"},{"d":"2026-01-29","c":"classe 3","m":"","t":"DA ASSEGNARE","h":"16-19"},{"d":"2026-01-29","c":"classe 4","m":"","t":"C3 - Greco Giovannella","h":"17-19"},{"d":"2026-01-29","c":"classe 10","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-01-29","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-19"},{"d":"2026-01-30","c":"classe 1","m":"","t":"C1 - Fantini Alessandro","h":"16-19"},{"d":"2026-01-30","c":"classe 3","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-01-30","c":"classe 6","m":"","t":"C3 - Schiumerini Ada","h":"16-20"},{"d":"2026-01-30","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-20"},{"d":"2026-01-31","c":"classe 4","m":"","t":"C3 - Greco Giovannella","h":"10-13"},{"d":"2026-01-31","c":"classe 8","m":"","t":"DA ASSEGNARE","h":"10-12"},{"d":"2026-01-31","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"9-13"},{"d":"2026-02-02","c":"classe 5","m":"","t":"C3 - Schiumerini Ada","h":"16-20"},{"d":"2026-02-02","c":"classe 6","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-02-02","c":"classe 7","m":"","t":"C3 - Morrone Cristina","h":"16-19"},{"d":"2026-02-02","c":"classe 10","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-02-02","c":"classe 11","m":"","t":"C1 - Misisca Remo","h":"16-20"},{"d":"2026-02-03","c":"classe 2","m":"","t":"C1 - Bertagnon Alessandro","h":"17-20"},{"d":"2026-02-03","c":"classe 4","m":"","t":"C1 - Di Biasi Luigi","h":"16-19"},{"d":"2026-02-03","c":"classe 7","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-02-03","c":"classe 9","m":"","t":"C1 - Dyoub Abeer","h":"16-20"},{"d":"2026-02-03","c":"classe 11","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-02-04","c":"classe 4","m":"","t":"C3 - Greco Giovannella","h":"16-19"},{"d":"2026-02-04","c":"classe 8","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-02-05","c":"classe 1","m":"","t":"C3 - Morrone Cristina","h":"17-19"},{"d":"2026-02-05","c":"classe 7","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-02-05","c":"classe 11","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-02-06","c":"classe 1","m":"","t":"DA ASSEGNARE","h":"17-19"},{"d":"2026-02-06","c":"classe 4","m":"","t":"C3 - Greco Giovannella","h":"17-19"},{"d":"2026-02-06","c":"classe 6","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-02-07","c":"classe 8","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-02-09","c":"classe 7","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-02-09","c":"classe 8","m":"","t":"C1 - Bertagnon Alessandro","h":"17-19"},{"d":"2026-02-09","c":"classe 11","m":"","t":"DA ASSEGNARE","h":"16-20"},{"d":"2026-02-10","c":"classe 6","m":"","t":"DA ASSEGNARE","h":"17-19"}];
+    const DATA = [{"d":"2025-12-02","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-02","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"17-19"},{"d":"2025-12-02","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-02","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-02","c":"classe 10","m":"C2","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-03","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-19"},{"d":"2025-12-03","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"17-20"},{"d":"2025-12-03","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-03","c":"classe 5","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-03","c":"classe 11","m":"C2","t":"Morrone Cristina","h":"17-19"},{"d":"2025-12-04","c":"classe 5","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-04","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-04","c":"classe 10","m":"C2","t":"Schiumerini Ada","h":"16-19"},{"d":"2025-12-05","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-05","c":"classe 5","m":"C1","t":"Misisca Remo","h":"17-20"},{"d":"2025-12-05","c":"classe 10","m":"C2","t":"Schiumerini Ada","h":"16-19"},{"d":"2025-12-05","c":"classe 11","m":"C2","t":"Morrone Cristina","h":"16-20"},{"d":"2025-12-06","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"10-13"},{"d":"2025-12-06","c":"classe 9","m":"C2","t":"Schiumerini Ada","h":"10-12"},{"d":"2025-12-09","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-09","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-09","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"17-20"},{"d":"2025-12-09","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-09","c":"classe 10","m":"C3","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-10","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-10","c":"classe 5","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-10","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-10","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-10","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-10","c":"classe 9","m":"C2","t":"Schiumerini Ada","h":"9-13"},{"d":"2025-12-10","c":"classe 11","m":"C2","t":"Morrone Cristina","h":"17-19"},{"d":"2025-12-11","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"17-20"},{"d":"2025-12-11","c":"classe 5","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-11","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-11","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-11","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-19"},{"d":"2025-12-11","c":"classe 10","m":"C3","t":"Schiumerini Ada","h":"16-20"},{"d":"2025-12-12","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-12","c":"classe 2","m":"C2","t":"Schiumerini Ada","h":"17-20"},{"d":"2025-12-12","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-12","c":"classe 5","m":"C1","t":"Misisca Remo","h":"17-20"},{"d":"2025-12-12","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-12","c":"classe 11","m":"C3","t":"Morrone Cristina","h":"16-20"},{"d":"2025-12-13","c":"classe 1","m":"C2","t":"Morrone Cristina","h":"9-13"},{"d":"2025-12-13","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"10-13"},{"d":"2025-12-13","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"9-13"},{"d":"2025-12-13","c":"classe 9","m":"C2","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-15","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-15","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-15","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-15","c":"classe 10","m":"C3","t":"Schiumerini Ada","h":"16-20"},{"d":"2025-12-16","c":"classe 1","m":"C2","t":"Morrone Cristina","h":"16-20"},{"d":"2025-12-16","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-16","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-16","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-16","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2025-12-17","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"16-20"},{"d":"2025-12-17","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-20"},{"d":"2025-12-17","c":"classe 5","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-17","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-17","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-17","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-17","c":"classe 9","m":"C3","t":"Schiumerini Ada","h":"16-20"},{"d":"2025-12-17","c":"classe 11","m":"C3","t":"Morrone Cristina","h":"16-20"},{"d":"2025-12-18","c":"classe 2","m":"C3","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-18","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"17-20"},{"d":"2025-12-18","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-19","c":"classe 2","m":"C3","t":"Schiumerini Ada","h":"17-19"},{"d":"2025-12-19","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2025-12-19","c":"classe 5","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-19","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-19","c":"classe 11","m":"C3","t":"Morrone Cristina","h":"17-19"},{"d":"2025-12-20","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"10-13"},{"d":"2025-12-20","c":"classe 5","m":"C1","t":"Misisca Remo","h":"10-13"},{"d":"2025-12-20","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"17-19"},{"d":"2025-12-20","c":"classe 9","m":"C3","t":"Schiumerini Ada","h":"16-20"},{"d":"2025-12-22","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-22","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-22","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2025-12-22","c":"classe 5","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2025-12-22","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-22","c":"classe 9","m":"C3","t":"Schiumerini Ada","h":"10-12"},{"d":"2025-12-23","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2025-12-23","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2025-12-23","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2025-12-29","c":"classe 2","m":"C2","t":"Schiumerini Ada","h":"17-20"},{"d":"2025-12-29","c":"classe 3","m":"C1","t":"Dyoub Abeer","h":"16-20"},{"d":"2025-12-29","c":"classe 5","m":"C1","t":"Misisca Remo","h":"16-20"},{"d":"2025-12-29","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-20"},{"d":"2025-12-29","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-30","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2025-12-30","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-20"},{"d":"2026-01-07","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-07","c":"classe 5","m":"C2","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-07","c":"classe 8","m":"C2","t":"Greco Giovannella","h":"17-19"},{"d":"2026-01-07","c":"classe 9","m":"C4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-01-07","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"17-19"},{"d":"2026-01-08","c":"classe 2","m":"C2","t":"Schiumerini Ada","h":"17-19"},{"d":"2026-01-08","c":"classe 3","m":"C2","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-08","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-08","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-08","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-09","c":"classe 1","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-09","c":"classe 3","m":"C2","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-09","c":"classe 4","m":"C2","t":"Greco Giovannella","h":"17-19"},{"d":"2026-01-09","c":"classe 5","m":"C2","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-09","c":"classe 6","m":"C1","t":"Saccomanno Francesco Paolo","h":"16-19"},{"d":"2026-01-09","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-09","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-09","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-09","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-10","c":"classe 1","m":"C4","t":"DOCENTE ANONIMO 2","h":"9-13"},{"d":"2026-01-10","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"10-13"},{"d":"2026-01-12","c":"classe 3","m":"C3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-01-12","c":"classe 4","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-12","c":"classe 5","m":"C3","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-12","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-12","c":"classe 8","m":"C2","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-12","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"17-19"},{"d":"2026-01-13","c":"classe 2","m":"C3","t":"Schiumerini Ada","h":"16-19"},{"d":"2026-01-13","c":"classe 3","m":"C3","t":"Morrone Cristina","h":"16-19"},{"d":"2026-01-13","c":"classe 4","m":"C2","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-13","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-13","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-13","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-14","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-14","c":"classe 6","m":"C2","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-14","c":"classe 7","m":"C2","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-14","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-14","c":"classe 11","m":"C1","t":"Misisca Remo","h":"17-19"},{"d":"2026-01-15","c":"classe 1","m":"C3","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-15","c":"classe 5","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-15","c":"classe 8","m":"C2","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-15","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-16","c":"classe 2","m":"C3","t":"Schiumerini Ada","h":"16-19"},{"d":"2026-01-16","c":"classe 3","m":"C3","t":"Morrone Cristina","h":"16-19"},{"d":"2026-01-16","c":"classe 4","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-16","c":"classe 9","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-16","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-16","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-17","c":"classe 1","m":"C3","t":"Morrone Cristina","h":"9-13"},{"d":"2026-01-17","c":"classe 8","m":"C3","t":"Greco Giovannella","h":"10-12"},{"d":"2026-01-19","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-19"},{"d":"2026-01-19","c":"classe 3","m":"C3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-01-19","c":"classe 4","m":"C4","t":"DOCENTE ANONIMO 2","h":"17-19"},{"d":"2026-01-19","c":"classe 5","m":"C4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-01-19","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-20","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-20","c":"classe 3","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-19"},{"d":"2026-01-20","c":"classe 7","m":"C2","t":"Morrone Cristina","h":"16-20"},{"d":"2026-01-20","c":"classe 8","m":"C3","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-20","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-21","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-21","c":"classe 5","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-21","c":"classe 7","m":"C3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-01-21","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-21","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-21","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-01-21","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-22","c":"classe 2","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-22","c":"classe 4","m":"C2","t":"Greco Giovannella","h":"16-19"},{"d":"2026-01-22","c":"classe 6","m":"C2","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-23","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-23","c":"classe 5","m":"C3","t":"Schiumerini Ada","h":"17-19"},{"d":"2026-01-23","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-23","c":"classe 10","m":"C1","t":"Di Biasi Luigi","h":"16-20"},{"d":"2026-01-23","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-24","c":"classe 3","m":"C4","t":"DOCENTE ANONIMO 1","h":"10-12"},{"d":"2026-01-24","c":"classe 6","m":"C3","t":"Schiumerini Ada","h":"10-13"},{"d":"2026-01-24","c":"classe 7","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-24","c":"classe 8","m":"C3","t":"Greco Giovannella","h":"10-13"},{"d":"2026-01-26","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-19"},{"d":"2026-01-26","c":"classe 2","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-26","c":"classe 7","m":"C3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-01-26","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-26","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-19"},{"d":"2026-01-27","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-01-27","c":"classe 6","m":"C3","t":"Schiumerini Ada","h":"16-19"},{"d":"2026-01-27","c":"classe 7","m":"C3","t":"Morrone Cristina","h":"16-19"},{"d":"2026-01-27","c":"classe 9","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-01-27","c":"classe 10","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-28","c":"classe 2","m":"C4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-01-28","c":"classe 8","m":"C3","t":"Greco Giovannella","h":"17-19"},{"d":"2026-01-28","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-29","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-20"},{"d":"2026-01-29","c":"classe 3","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-19"},{"d":"2026-01-29","c":"classe 4","m":"C3","t":"Greco Giovannella","h":"17-19"},{"d":"2026-01-29","c":"classe 10","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-01-29","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-19"},{"d":"2026-01-30","c":"classe 1","m":"C1","t":"Fantini Alessandro","h":"16-19"},{"d":"2026-01-30","c":"classe 3","m":"C4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-01-30","c":"classe 6","m":"C3","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-01-30","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-20"},{"d":"2026-01-31","c":"classe 4","m":"C3","t":"Greco Giovannella","h":"10-13"},{"d":"2026-01-31","c":"classe 8","m":"C4","t":"DOCENTE ANONIMO 2","h":"10-12"},{"d":"2026-01-31","c":"classe 11","m":"C1","t":"Misisca Remo","h":"9-13"},{"d":"2026-02-02","c":"classe 5","m":"C3","t":"Schiumerini Ada","h":"16-20"},{"d":"2026-02-02","c":"classe 6","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-02-02","c":"classe 7","m":"C3","t":"Morrone Cristina","h":"16-19"},{"d":"2026-02-02","c":"classe 10","m":"C4","t":"DOCENTE ANONIMO 2","h":"17-19"},{"d":"2026-02-02","c":"classe 11","m":"C1","t":"Misisca Remo","h":"16-20"},{"d":"2026-02-03","c":"classe 2","m":"C1","t":"Bertagnon Alessandro","h":"17-20"},{"d":"2026-02-03","c":"classe 4","m":"C1","t":"Di Biasi Luigi","h":"16-19"},{"d":"2026-02-03","c":"classe 7","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-02-03","c":"classe 9","m":"C1","t":"Dyoub Abeer","h":"16-20"},{"d":"2026-02-03","c":"classe 11","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-02-04","c":"classe 4","m":"C3","t":"Greco Giovannella","h":"16-19"},{"d":"2026-02-04","c":"classe 8","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-02-05","c":"classe 1","m":"C3","t":"Morrone Cristina","h":"17-19"},{"d":"2026-02-05","c":"classe 7","m":"C4","t":"DOCENTE ANONIMO 1","h":"17-19"},{"d":"2026-02-05","c":"classe 11","m":"C4","t":"DOCENTE ANONIMO 2","h":"17-19"},{"d":"2026-02-06","c":"classe 1","m":"C4","t":"DOCENTE ANONIMO 2","h":"17-19"},{"d":"2026-02-06","c":"classe 4","m":"C3","t":"Greco Giovannella","h":"17-19"},{"d":"2026-02-06","c":"classe 6","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-02-07","c":"classe 8","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-02-09","c":"classe 7","m":"C4","t":"DOCENTE ANONIMO 1","h":"16-20"},{"d":"2026-02-09","c":"classe 8","m":"C1","t":"Bertagnon Alessandro","h":"17-19"},{"d":"2026-02-09","c":"classe 11","m":"C4","t":"DOCENTE ANONIMO 2","h":"16-20"},{"d":"2026-02-10","c":"classe 6","m":"C4","t":"DOCENTE ANONIMO 1","h":"17-19"}];
     let calendar = null;
 
-    // COLORI (Angolo Aureo)
+    // COLORI
     const classes = [...new Set(DATA.map(i => i.c))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
     const teachers = [...new Set(DATA.map(i => i.t))].sort();
     const colorMap = {};
     classes.forEach((c, idx) => { colorMap[c] = (idx * 137.508) % 360; });
 
-    // INIT FILTERS
+    // INIT
     const selClass = document.getElementById('f-class');
     const selTeacher = document.getElementById('f-teacher');
     classes.forEach(c => selClass.add(new Option(c.toUpperCase(), c)));
     teachers.forEach(t => selTeacher.add(new Option(t, t)));
 
-    // UI LOGIC
+    // LOGICA UI
     function togglePanel(id) {
-        // Chiudi altri pannelli
-        document.querySelectorAll('.panel').forEach(p => {
-            if (p.id !== 'panel-' + id) p.classList.remove('open');
+        ['help', 'filters'].forEach(p => {
+            if(p !== id) document.getElementById('panel-'+p).classList.remove('open');
         });
-        
-        const el = document.getElementById('panel-' + id);
-        const bd = document.getElementById('backdrop');
-        
-        if (el.classList.contains('open')) {
-            el.classList.remove('open');
-            bd.classList.remove('active');
-        } else {
-            el.classList.add('open');
-            bd.classList.add('active');
+        document.getElementById('panel-'+id).classList.toggle('open');
+    }
+    
+    // Close panels when clicking content
+    document.querySelector('.content-viewport').addEventListener('click', (e) => {
+        if(!e.target.closest('.panel')) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
         }
-    }
-
-    function closeAll() {
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
-        document.getElementById('backdrop').classList.remove('active');
-    }
+    });
 
     function toggleModal(id, show) {
-        document.getElementById('modal-' + id).style.display = show ? 'flex' : 'none';
+        document.getElementById('modal-'+id).style.display = show ? 'flex' : 'none';
     }
 
     function switchView(view) {
@@ -288,7 +296,7 @@
         div.innerHTML = "";
         
         if(data.length === 0) {
-            div.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:40px; color:#94a3b8'>Nessuna lezione trovata.</div>";
+            div.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:3rem; color:#94a3b8'>Nessuna lezione trovata.</div>";
             return;
         }
 
@@ -303,7 +311,7 @@
                 const dStr = dObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
                 const isToday = item.d >= today && !scrolled;
                 if(isToday) scrolled = true;
-                div.innerHTML += `<div class="date-row" ${isToday ? 'id="scroll-target"':''}>${dStr}</div>`;
+                div.innerHTML += `<div class="date-sep" ${isToday ? 'id="scroll-target"':''}>${dStr}</div>`;
             }
 
             const hue = colorMap[item.c];
@@ -312,11 +320,11 @@
             div.innerHTML += `
                 <div class="card">
                     <div class="card-border" style="background:hsl(${hue}, 70%, 50%)"></div>
-                    <div class="card-head">
+                    <div class="card-top">
                         <span class="badge-class" style="background:hsl(${hue}, 85%, 96%); color:hsl(${hue}, 80%, 25%)">${item.c}</span>
                         <span class="badge-time">⏰ ${item.h}</span>
                     </div>
-                    <div class="card-body">
+                    <div class="card-main">
                         ${modHtml}
                         <div class="teacher">${item.t}</div>
                     </div>
@@ -330,7 +338,7 @@
         }, 300);
     }
 
-    // RENDER CALENDAR
+    // CALENDAR
     function initCalendar() {
         const isMobile = window.innerWidth < 768;
         const initialView = isMobile ? 'listMonth' : 'dayGridMonth';
@@ -344,8 +352,12 @@
                 end += 'T' + clean(parts[1]);
             }
             const hue = colorMap[item.c];
+            
+            // CLEAN TITLE: Solo [M1] se esiste, altrimenti nulla
+            const modPrefix = item.m ? `[${item.m}] ` : '';
+            
             return {
-                title: `[${item.m || '?'}] ${item.c} - ${item.t}`,
+                title: `${modPrefix}${item.c} - ${item.t}`,
                 start: start, end: end,
                 backgroundColor: `hsl(${hue}, 70%, 50%)`,
                 borderColor: `hsl(${hue}, 70%, 40%)`
@@ -358,6 +370,7 @@
             height: '100%',
             headerToolbar: { left: 'prev,next', center: 'title', right: isMobile ? 'listMonth' : 'dayGridMonth' },
             events: events,
+            eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false },
             eventClick: (info) => alert(info.event.title)
         });
         calendar.render();
@@ -388,8 +401,9 @@
                     end += 'T' + clean(parts[1]);
                 }
                 const hue = colorMap[item.c];
+                const modPrefix = item.m ? `[${item.m}] ` : '';
                 return {
-                    title: `[${item.m || '?'}] ${item.c} - ${item.t}`,
+                    title: `${modPrefix}${item.c} - ${item.t}`,
                     start: start, end: end,
                     backgroundColor: `hsl(${hue}, 70%, 50%)`
                 };
@@ -402,7 +416,7 @@
         selClass.value = ""; selTeacher.value = "";
         document.getElementById('f-search').value = "";
         applyFilters();
-        closeAll();
+        togglePanel('filters');
     }
 
     // Start
