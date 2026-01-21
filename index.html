@@ -57,7 +57,9 @@
     .main-logo { max-height: 40px; width: auto; }
     .logo-text { color: var(--primary); margin: 0; text-transform: uppercase; font-size: 1.2rem; letter-spacing: 1px; font-weight:900; }
 
-    .actions { display: flex; gap: 0.5rem; }
+    .actions { display: flex; gap: 0.75rem; align-items: center; }
+    .action-item { display:flex; flex-direction:column; align-items:center; gap:0.15rem; min-width:56px; }
+    .action-label { font-size:0.65rem; color:#334155; line-height:1; }
     .btn-icon {
         background: transparent; border: 1px solid var(--border);
         width: 2.5rem; height: 2.5rem; border-radius: 0.5rem;
@@ -147,6 +149,28 @@
     .nav-icon { font-size: 1.25rem; }
 
     /* --- PANNELLI --- */
+
+    /* --- FILTRI SEMPRE VISIBILI --- */
+    .filters-bar { 
+        flex: 0 0 auto;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem 1rem;
+    }
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .btn-ghost.btn-small { width: auto; padding: 0.6rem 0.9rem; border-radius: 0.75rem; }
+    .filters-bar.pulse { box-shadow: 0 0 0 3px rgba(37,99,235,0.25); }
+    @media (max-width: 520px) {
+        .filters-bar { padding: 0.5rem 0.75rem; }
+        .filters-grid { grid-template-columns: 1fr; }
+        .btn-ghost.btn-small { width: 100%; }
+    }
+
     .panel {
         display: none; position: absolute; top: 0; left: 0; right: 0; 
         background: white; padding: 1.5rem; z-index: 99;
@@ -189,29 +213,35 @@
             <div class="header-title" title="Orario - Calendario attività didattiche">Orario - Calendario attività didattiche - Aggiornato il 21/01/2026</div>
         </div>
         <div class="actions">
-            <button class="btn-icon" onclick="togglePanel('help')" title="Istruzioni">❓</button>
-            <button class="btn-icon" onclick="togglePanel('filters')" title="Filtri">🌪️</button>
-            <button class="btn-icon" onclick="toggleModal('legend', true)" title="Legenda">ℹ️</button>
+            <div class="action-item">
+                <button class="btn-icon" onclick="togglePanel('help')" title="Aiuto">❓</button>
+                <div class="action-label">Aiuto</div>
+            </div>
+            <div class="action-item">
+                <button class="btn-icon" onclick="focusFilters()" title="Cerca/Filtra">🌪️</button>
+                <div class="action-label">Cerca/Filtra</div>
+            </div>
+            <div class="action-item">
+                <button class="btn-icon" onclick="toggleModal('legend', true)" title="Info">ℹ️</button>
+                <div class="action-label">Info</div>
+            </div>
         </div>
     </header>
 
-    <div class="content-viewport">
-        
-        <div id="panel-filters" class="panel">
-            <h3 style="margin-top:0">Filtra Orario</h3>
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                <select id="f-class" class="f-input" onchange="applyFilters()"><option value="">Tutte le Classi</option></select>
-                <select id="f-teacher" class="f-input" onchange="applyFilters()"><option value="">Tutti i Docenti</option></select>
-            </div>
+    <div class="filters-bar" id="filters-bar">
+        <div class="filters-grid">
+            <select id="f-class" class="f-input" onchange="applyFilters()"><option value="">Tutte le Classi</option></select>
+            <select id="f-teacher" class="f-input" onchange="applyFilters()"><option value="">Tutti i Docenti</option></select>
             <input type="search" id="f-search" class="f-input" placeholder="Cerca..." onkeyup="applyFilters()">
-            <button class="btn-primary" onclick="togglePanel('filters')">Applica e Chiudi</button>
-            <button class="btn-ghost" onclick="resetFilters()">Resetta tutto</button>
+            <button class="btn-ghost btn-small" onclick="resetFilters()">Reset</button>
         </div>
+    </div>
 
+    <div class="content-viewport">
         <div id="panel-help" class="panel">
             <h3 style="margin-top:0">Guida Rapida</h3>
             <ul style="padding-left:1.2rem; line-height:1.6">
-                <li><b>Filtri:</b> Usa 🌪️ per selezionare la tua classe.</li>
+                <li><b>Filtri:</b> Usa la barra <b>Cerca/Filtra</b> in alto per classe/docente e ricerca.</li>
                 <li><b>Viste:</b> Usa i tasti in basso (Lista/Calendario).</li>
                 <li><b>Mobile:</b> Il calendario su mobile diventa una lista mensile.</li>
             </ul>
@@ -269,14 +299,35 @@
     teachers.forEach(t => selTeacher.add(new Option(t, t)));
 
     // LOGICA UI
+    function focusFilters() {
+        const bar = document.getElementById('filters-bar');
+        if(bar) {
+            bar.classList.add('pulse');
+            setTimeout(() => bar.classList.remove('pulse'), 600);
+        }
+        const s = document.getElementById('f-search');
+        if(s) {
+            try { s.focus({ preventScroll: true }); } catch(e) { s.focus(); }
+        }
+    }
+
     function togglePanel(id) {
-        ['help', 'filters'].forEach(p => {
+        // I filtri sono sempre visibili: il pulsante serve solo a portare/focalizzare la barra.
+        if(id === 'filters') { focusFilters(); return; }
+
+        ['help'].forEach(p => {
             if(p !== id) document.getElementById('panel-'+p).classList.remove('open');
         });
-        document.getElementById('panel-'+id).classList.toggle('open');
+        const el = document.getElementById('panel-'+id);
+        el.classList.toggle('open');
+
+        // Se apro un panel, lo porto in vista (sei magari sceso alla data corrente).
+        if(el.classList.contains('open')) {
+            try { document.querySelector('.content-viewport').scrollTo({ top: 0, behavior: 'smooth' }); }
+            catch(e) { document.querySelector('.content-viewport').scrollTop = 0; }
+        }
     }
-    
-    // Close panels when clicking content
+// Close panels when clicking content
     document.querySelector('.content-viewport').addEventListener('click', (e) => {
         if(!e.target.closest('.panel')) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
